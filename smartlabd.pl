@@ -448,7 +448,7 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
             print "Listening...."."\n";
         }
 
-        my $JSON = `sox -r 16k -t alsa hw:1,0 ./out.flac silence 1 0.1 5% 1 2.0 5% trim 0 15 && wget -O - -o /dev/null --post-file ./out.flac --header="Content-Type: audio/x-flac; rate=16000" "$API"`;
+        my $JSON = `sox -q -r 16k -t alsa hw:1,0 ./out.flac silence 1 0.1 5% 1 2.0 5% trim 0 15 && wget -O - -o /dev/null --post-file ./out.flac --header="Content-Type: audio/x-flac; rate=16000" "$API"`;
     
         my $STATUS = substr $JSON, 10, 1;
 
@@ -470,9 +470,10 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
         {
             $FLAG=1;
         }
-        elsif($UTTERANCE eq "terminate" || $COUNT == 3)
+        elsif($UTTERANCE eq "stop" || $COUNT == 3) # max 3 meaningless sentences in succession
         {
             $FLAG=0;
+            print "Speak google to activate\n";            
         }
         elsif($UTTERANCE eq "Could not recognize.")
         {
@@ -490,6 +491,7 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
         {
             $COUNT=0;
             change_state($ACTION);
+            print "state changed\n";
         }
         # system("echo $ACTION > /dev/ttys2");
         }
@@ -498,19 +500,12 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
 
 sub change_state {
     my $IN = $_[0];
-    print $IN;
-    my $fifo = "/tmp/named.pipe";
-    unless ( -p $fifo ) {
-      mkfifo( $fifo, 0666 ) or die $!;
-    }
-    while (1) {
-    open( my $fh, '>', $fifo );
-    my $t = scalar localtime;
-    warn "writing to fifo at $t\n";
-    print $fh "written at $t\n";
+    print $IN."\n";
+    my $file = "/tmp/from_perl.txt";
+    open( my $fh, '>', $file );
+    print $fh $IN."\n";
     close $fh;
     sleep 2;
-  }
 }
 
 sub calibrate{
@@ -527,27 +522,38 @@ sub calibrate{
 use threads;
 
 sub pipe_from_gui{
-    my $p_in;
+    my $p_in = "/tmp/from_gui.txt";
     while(1){
-        # TODO listen to p_in for input from gui
-        
-        # then change state accordingly.
-        #  
-        change_state("L1 ON");
+ 	if (-e $p_in) {
+	print "opening\n";
+ 	  open( my $p, "<", $p_in ) or die $!;  
+ 	  print "opened\n";
+ 	  while(<$p>) {
+            print "calling change state\n";
+ 	    change_state($_);
+ 	  }
+ 	  close($p);
+  	}
     }
 }
 
 sub main{
-    unless(-e "/tmp/sl-calibrated"){
-        my $avail_lights = calibrate();
-    }    
-
-    my $gesture_prog = "./gesture.out";
+#     unless(-e "/tmp/sl-calibrated"){
+#         my $avail_lights = calibrate();
+#     }    
+# 
+#     my $gesture_prog = "./gesture.out";
 
     # TODO
-    my $speech_thread = threads->create(\&start_listening);
-    my $speech_thread_ret = $speech_thread->join();
-    
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
+    print "gui thread start\n";
+    
+    my $speech_thread = threads->create(\&start_listening);
+    my $gui_thread_ret = $gui_pipe_thread->join();
+    my $speech_thread_ret = $speech_thread->join();
+    print "speech thread start\n";
+    
     
 }
+
+main();
