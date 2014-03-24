@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use threads;
 use IPC::System::Simple qw(capture);
 use JSON;
 use POSIX 'mkfifo';
@@ -19,8 +20,14 @@ our $fanSent = 0, our $lightSent = 0;
 our $id1 = "default", our $id2 = "default";
 our $rno1, our $rno2;
 our $pid1, our $pid2;
-our $json = '{
-            "norooms": "2",
+# okay, the order of elements in this json matters.
+# the house is this:
+# 3 rooms. R0: 3 ports- 2 lights, 1 fan
+# R1: 2 ports- 1 light, 1 fan
+# R2: 1 port- 1 light. THAT's IT. DO NOT ALTER.
+our $json = '
+    {
+            "norooms": "3",
             "rooms": [
                 {
                     "room_id": "R0",
@@ -30,12 +37,21 @@ our $json = '{
                         "default",
                         "here"
                     ],
-                    "noports": "2",
+                    "noports": "3",
                     "ports": [
                         {
                             "port_id": "P0",
                             "port_device": "L",
-                            "dev_coord" : 0,
+                            "dev_coord" : "0",
+                            "port_aliases": [
+                                "light",
+                                " bulb"
+                            ]
+                        },
+                        {
+                            "port_id": "P1",
+                            "port_device": "L",
+                            "dev_coord" : "0",
                             "port_aliases": [
                                 "light",
                                 " bulb"
@@ -74,6 +90,24 @@ our $json = '{
                             ],
                             "port_device": "F",
                             "port_id": "P1"
+                        }
+                    ]
+                },
+                {
+                    "room_id": "R2",
+                    "room_aliases": [
+                        "bath room"
+                    ],
+                    "noports": "1",
+                    "ports": [
+                        {
+                            "port_id": "P0",
+                            "port_device": "L",
+                            "dev_coord" : 0,
+                            "port_aliases": [
+                                "light",
+                                " bulb"
+                            ]
                         }
                     ]
                 }
@@ -441,7 +475,6 @@ my $NOISE_TIME=0.1;
 my $TOLERANCE=5;
 my $SILENCE_TIME=2.0;
 sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog. then say "switch on/off that light". then get light code from dev_coord.
-    # TODO add pipe to gui telling about state change.
     while(1) {
         if ($FLAG == 1)
         {
@@ -509,17 +542,26 @@ sub change_state {
 }
 
 sub calibrate{
-    my $calib_prog = "./calibrator.out";
+    my $calib_prog = "./kinect-calibrator.out";
     my $avail_lights = `$calib_prog`; # -> "2 (NLIGHTS) | 3 2 4 (L1) | 1 2 3 (L2)"
     my @light_split = split("|", $avail_lights);
 
+    # NROOMS is 2.
+    # $rooms[0] has kinect. it has '2' lights, as told by $calib_prog. yes.
+
     # TODO generalize for all ports if type 'L' in R0 and then construct JSON
-    $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[1]; # this is ONLY for the zeroth device
-    $json = encode_json($decoded);
+
+    my $NLIGHTS = $light_split[0];
+
+    # this is bad, yes.
+    $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[1];
+    $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[2];
+
+    open(my $fh, '>', '/tmp/sl-calibrated'); # just create the file.
+    close $fh;
+    $json = encode_json($decoded); # inserted dev_coord into json.
     return $avail_lights;
 }
-
-use threads;
 
 sub pipe_from_gui{
     my $p_in = "/tmp/from_gui.txt";
@@ -538,22 +580,19 @@ sub pipe_from_gui{
 }
 
 sub main{
-#     unless(-e "/tmp/sl-calibrated"){
+#     unless(-e "/tmp/sl-calibrated"){ # create a file upon calibration.
 #         my $avail_lights = calibrate();
 #     }    
 # 
 #     my $gesture_prog = "./gesture.out";
 
-    # TODO
+
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
     print "gui thread start\n";
-    
     my $speech_thread = threads->create(\&start_listening);
     my $gui_thread_ret = $gui_pipe_thread->join();
     my $speech_thread_ret = $speech_thread->join();
     print "speech thread start\n";
-    
-    
 }
 
 main();
