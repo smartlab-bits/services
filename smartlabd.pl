@@ -524,7 +524,7 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
         {
             $COUNT=0;
             change_state($ACTION);
-            print "state changed\n";
+#             print "state changed\n";
         }
         # system("echo $ACTION > /dev/ttys2");
         }
@@ -533,10 +533,11 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
 
 sub change_state {
     my $IN = $_[0];
-    print $IN."\n";
+    print $IN;
     my $file = "/tmp/from_perl.txt";
     open( my $fh, '>', $file );
-    print $fh $IN."\n";
+    chomp $IN;
+    print $fh $IN;
     close $fh;
     sleep 2;
 }
@@ -565,14 +566,18 @@ sub calibrate{
 
 sub pipe_from_gui{
     my $p_in = "/tmp/from_gui.txt";
+    my $prev = "";
     while(1){
  	if (-e $p_in) {
-	print "opening\n";
+# 	print "opening\n";
  	  open( my $p, "<", $p_in ) or die $!;  
- 	  print "opened\n";
+#  	  print "opened\n";
  	  while(<$p>) {
-            print "calling change state\n";
- 	    change_state($_);
+#             print "calling change state\n";
+            if($_ ne $prev) {
+                change_state($_."\n");
+                $prev = $_;
+            }
  	  }
  	  close($p);
   	}
@@ -588,11 +593,11 @@ sub main{
 
 
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
-    print "gui thread start\n";
+#     print "gui thread start\n";
     my $speech_thread = threads->create(\&start_listening);
+#     print "speech thread start\n";
     my $gui_thread_ret = $gui_pipe_thread->join();
     my $speech_thread_ret = $speech_thread->join();
-    print "speech thread start\n";
 }
 
 main();
