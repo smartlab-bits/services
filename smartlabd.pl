@@ -126,68 +126,68 @@ foreach my $i ( 0 .. $#rooms ) {
 }
 
 sub tokenizeString { # breaks the given sentence into words
-	my ($s) = @_;
-        my $i = 0;
-        foreach my $st (@conjunctions) {
-            $i = index $s, $st;
-            if ($i != -1) {
-		@words1 = split(' ', substr($s, 0, $i));
-                @words2 = split(' ', substr($s, $i));
-                last;
-            }
+    my ($s) = @_;
+    my $i = 0;
+    foreach my $st (@conjunctions) {
+        $i = index $s, $st;
+        if ($i != -1) {
+            @words1 = split(' ', substr($s, 0, $i));
+            @words2 = split(' ', substr($s, $i));
+            last;
         }
-        if ($i == -1 || (scalar(@words2) == 2)) {
-            @words1 = split(' ', $s);
-            @words2 = split('',"");
-        }
+    }
+    if ($i == -1 || (scalar(@words2) == 2)) {
+        @words1 = split(' ', $s);
+        @words2 = split('',"");
+    }
 }
 
 sub getid() { #gets room name
       if(scalar(@words1)!=0) {
-	    foreach my $i (0 .. $#words1) {
-		  foreach my $rword (@roomwords) {
-			  if(index($words1[$i], $rword) != -1) {
-				  if($rword eq "room" && $words1[$i] eq $rword)
-				  { $id1 = $words1[$i-1]." ".$words1[$i]; }
-				  else
-				  { $id1 = $words1[$i]; }
-			  }
-		}
-	}
-	}
-	if(scalar(@words2)!=0) {
-	    foreach my $i (0 .. $#words2) {
-		  foreach my $rword (@roomwords) {
-			  if(index($words2[$i], $rword) != -1) {
-				  if($rword eq "room" && $words2[$i] eq $rword)
-				  { $id2 = $words2[$i-1]." ".$words2[$i]; }
-				  else
-				  { $id2 = $words2[$i]; }
-			  }
-		}
-	}
-	}
-	if($id2 ne "default") {
-	    if($id1 eq "default") {
-		$id1 = $id2;
-		}
-	} else {
-	    if($id1 ne "default") {
-		$id2 = $id1;
-		}
-	}
-	foreach my $i (0 .. $#rooms_aliases) {
- 	    foreach my $j (0 .. $#{$rooms_aliases[$i]}) {
-		if(index($id1, $rooms_aliases[$i][$j]) != -1) {
-		    $id1 = $rooms[$i]->{"room_id"};
-		    $rno1 = $i;
-		}
-		if(index($id2, $rooms_aliases[$i][$j]) != -1) {
-		    $id2 = $rooms[$i]->{"room_id"};
-		    $rno2 = $i; 
-		}
- 	    }
-	}
+        foreach my $i (0 .. $#words1) {
+            foreach my $rword (@roomwords) {
+                if(index($words1[$i], $rword) != -1) {
+                    if($rword eq "room" && $words1[$i] eq $rword)
+                    { $id1 = $words1[$i-1]." ".$words1[$i]; }
+                    else
+                    { $id1 = $words1[$i]; }
+                }
+            }
+        }
+        }
+        if(scalar(@words2)!=0) {
+            foreach my $i (0 .. $#words2) {
+            foreach my $rword (@roomwords) {
+                if(index($words2[$i], $rword) != -1) {
+                    if($rword eq "room" && $words2[$i] eq $rword)
+                    { $id2 = $words2[$i-1]." ".$words2[$i]; }
+                    else
+                    { $id2 = $words2[$i]; }
+                }
+            }
+        }
+    }
+    if($id2 ne "default") {
+        if($id1 eq "default") {
+            $id1 = $id2;
+        }
+    } else {
+        if($id1 ne "default") {
+            $id2 = $id1;
+        }
+    }
+    foreach my $i (0 .. $#rooms_aliases) {
+        foreach my $j (0 .. $#{$rooms_aliases[$i]}) {
+            if(index($id1, $rooms_aliases[$i][$j]) != -1) {
+                $id1 = $rooms[$i]->{"room_id"};
+                $rno1 = $i;
+            }
+            if(index($id2, $rooms_aliases[$i][$j]) != -1) {
+                $id2 = $rooms[$i]->{"room_id"};
+                $rno2 = $i; 
+            }
+        }
+    }
 }
 
 sub recognizeLight() { # gives output for light
@@ -199,16 +199,16 @@ sub recognizeLight() { # gives output for light
                 }
                 if ($offwordLight == 0) {
                     if ($corLight == 1) {
-				$lightAct=$id1.$pid1." on\n";
+                $lightAct=$id1.$pid1." on\n";
                     } else {
-				$lightAct=$id1.$pid1." off\n";
+                $lightAct=$id1.$pid1." off\n";
                     }
                 } else {
                     if ($corLight == 1) {
                         $lightAct=$id1.$pid1." off\n";
                     } else {
-			$lightAct=$id1.$pid1." on\n";
-			}
+            $lightAct=$id1.$pid1." on\n";
+            }
                     }
                 }
             elsif ($lightSent == 2) {
@@ -217,26 +217,26 @@ sub recognizeLight() { # gives output for light
                 }
                 if ($offwordLight == 0) {
                     if ($corLight == 1) {
-			$lightAct=$id2.$pid2." on\n";
+            $lightAct=$id2.$pid2." on\n";
                     } else {
-			$lightAct=$id2.$pid2." off\n";
-			}
+            $lightAct=$id2.$pid2." off\n";
+            }
                     }
                 else {
                     if ($corLight == 1) {
-			$lightAct=$id2.$pid2." off\n";
+            $lightAct=$id2.$pid2." off\n";
                     } else {
-			$lightAct=$id2.$pid2." on\n";
+            $lightAct=$id2.$pid2." on\n";
                     }
                 }
             }
         }
         resetLight();
-	return $lightAct;
+    return $lightAct;
     }
     
 sub recognizeFan() { # gives output for fan
-	my $fanAct = "";
+    my $fanAct = "";
         if (findFanWords()) {
             if ($fanSent == 1) {
                 if (countNegatives1() % 2 == 0) {
@@ -244,15 +244,15 @@ sub recognizeFan() { # gives output for fan
                 }
                 if ($offwordFan == 0) {
                     if ($corFan == 1) {
-			$fanAct=$id1.$pid1." on\n";
+            $fanAct=$id1.$pid1." on\n";
                     } else {
                         $fanAct=$id1.$pid1." off\n";
                     }
                 } else {
                     if ($corFan == 1) {
-			$fanAct=$id1.$pid1." off\n";
+            $fanAct=$id1.$pid1." off\n";
                     } else {
-			$fanAct=$id1.$pid1." on\n";
+            $fanAct=$id1.$pid1." on\n";
                     }
                 }
             } elsif ($fanSent == 2) {
@@ -275,26 +275,25 @@ sub recognizeFan() { # gives output for fan
             }
         }
         resetFan();
-	return $fanAct;
-    }
+    return $fanAct;
+}
 
     
 sub resetLight() { # self-explanatory
         $corLight = 0;
         $offwordLight = 0;
-    }
+}
     
 sub resetFan() { # self-explanatory
         $corFan = 0;
         $offwordFan = 0;
-    }
+}
     
 sub isQuestion1() { # checks if 1st sentence is a question
         foreach (@questionwords) {
-	    my $s = $_;
-
+            my $s = $_;
             foreach (@words1) {
-	      my $word = $_;
+                my $word = $_;
                 if ($s eq $word) {
                     return 1;
                 }
@@ -305,10 +304,10 @@ sub isQuestion1() { # checks if 1st sentence is a question
     }
 
 sub isQuestion2() { # checks if second sentence is a question
-        foreach (@questionwords) {
-	    my $s = $_;
+    foreach (@questionwords) {
+    my $s = $_;
             foreach (@words2) {
-		my $word = $_;
+    my $word = $_;
                 if ($s eq $word) {
                     return 1;
                 }
@@ -371,10 +370,10 @@ sub findLightWords() { # finds if the sentence contains light-related words and 
                     $flag = 1;
                     
                     foreach my $i (0 .. $#{$ports_r[$rno1]}) {
-			if($ports_r[$rno1][$i]->{"port_device"} eq "L") {
-			    $pid1 = $ports_r[$rno1][$i]->{"port_id"};
-			}
-		    }
+            if($ports_r[$rno1][$i]->{"port_device"} eq "L") {
+            $pid1 = $ports_r[$rno1][$i]->{"port_id"};
+            }
+            }
 
                     if ($words1[0] eq "dim"||$words1[0] eq "darken"|| (!($s eq $words1[0]) && (index($light, "bright") != -1 || $light eq "lit"))) {
                         $offwordLight = 1;
@@ -389,10 +388,10 @@ sub findLightWords() { # finds if the sentence contains light-related words and 
                     $flag = 1;
                     
                     foreach my $i (0 .. $#{$ports_r[$rno2]}) {
-			if($ports_r[$rno2][$i]->{"port_device"} eq "L") {
-			    $pid2 = $ports_r[$rno2][$i]->{"port_id"};
-			}
-		    }
+            if($ports_r[$rno2][$i]->{"port_device"} eq "L") {
+            $pid2 = $ports_r[$rno2][$i]->{"port_id"};
+            }
+            }
 
                     if ($words2[1] eq "dim"||$words2[1] eq "darken"|| (!($s eq $words2[1]) && (index($light, "bright") != -1 || $light eq "lit"))) {
                         $offwordLight = 1;
@@ -401,9 +400,6 @@ sub findLightWords() { # finds if the sentence contains light-related words and 
                 }
             }
         }
-
-
-
         return $flag;
     }
     
@@ -417,10 +413,10 @@ sub findFanWords() { # finds if the sentence contains fan-related words and chan
                     $flag = 1;
                     
                     foreach my $i (0 .. $#{$ports_r[$rno1]}) {
-			if($ports_r[$rno1][$i]->{"port_device"} eq "F") {
-			    $pid1 = $ports_r[$rno1][$i]->{"port_id"};
-			}
-		    }
+            if($ports_r[$rno1][$i]->{"port_device"} eq "F") {
+            $pid1 = $ports_r[$rno1][$i]->{"port_id"};
+            }
+        }
 
                     if ($words1[0] eq "heat"||$words1[0] eq "increase"|| (!($s eq $words1[0]) && (index($fan, "cool") != -1 || index($fan, "chill") != -1 || $fan eq "cold" || $fan eq "freezing"))) {
                         $offwordFan = 1;
@@ -435,10 +431,10 @@ sub findFanWords() { # finds if the sentence contains fan-related words and chan
                     $flag = 1;
                     
                     foreach my $i (0 .. $#{$ports_r[$rno2]}) {
-			if($ports_r[$rno2][$i]->{"port_device"} eq "F") {
-			    $pid2 = $ports_r[$rno2][$i]->{"port_id"};
-			}
-		    }
+            if($ports_r[$rno2][$i]->{"port_device"} eq "F") {
+            $pid2 = $ports_r[$rno2][$i]->{"port_id"};
+            }
+            }
 
                     if ($words2[1] eq "heat"||$words2[1] eq "increase"|| (!($s eq $words2[1]) && (index($fan, "cool") != -1 || index($fan, "chill") != -1 || $fan eq "cold" || $fan eq "freezing"))) {
                         $offwordFan = 1;
@@ -568,19 +564,19 @@ sub pipe_from_gui{
     my $p_in = "/tmp/from_gui.txt";
     my $prev = "";
     while(1){
- 	if (-e $p_in) {
-# 	print "opening\n";
- 	  open( my $p, "<", $p_in ) or die $!;  
-#  	  print "opened\n";
- 	  while(<$p>) {
+        if (-e $p_in) {
+        # print "opening\n";
+        open( my $p, "<", $p_in ) or die $!;  
+        # print "opened\n";
+            while(<$p>) {
 #             print "calling change state\n";
-            if($_ ne $prev) {
-                change_state($_."\n");
-                $prev = $_;
+                if($_ ne $prev) {
+                    change_state($_."\n");
+                    $prev = $_;
+                }
             }
- 	  }
- 	  close($p);
-  	}
+        close($p);
+        }
     }
 }
 
