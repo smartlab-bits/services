@@ -541,6 +541,7 @@ sub change_state {
 sub calibrate{
     my $calib_prog = "./kinect-calibrator.out";
     my $avail_lights =  `$calib_prog`; #"2!1111 2222 3333!4444 5555 6666";
+    #my $avail_lights =  "2!1111 2222 3333!4444 5555 6666";
     #$calib_prog`; # -> "2 (NLIGHTS)!3 2 4 (L1)!1 2 3 (L2)"
     my @light_split = split("!", $avail_lights);
 
@@ -580,6 +581,14 @@ sub pipe_from_gui{
     }
 }
 
+sub fetch_dev_coords{
+    # again, only R0P0 and R0P1 are kinect compatible.
+    my $light1 = $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'};
+    my $light2 = $decoded->{'rooms'}[0]->{'ports'}[1]->{'dev_coord'};
+    my $dev_coords = "$light1 $light2";
+    return $dev_coords;
+}
+
 sub main{
     unless(-e "/tmp/sl-calibrated"){ # create a file upon calibration.
         calibrate();
@@ -592,7 +601,9 @@ sub main{
         print "CALIBRATED\n";
         sleep(2);
     }
-#   my $gesture_prog = "./gesture.out";
+
+    my $dev_coords = fetch_dev_coords();
+#   my $gesture_prog = "./gesture.out $dev_coords";
 
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
 #     print "gui thread start\n";
