@@ -540,8 +540,9 @@ sub change_state {
 
 sub calibrate{
     my $calib_prog = "./kinect-calibrator.out";
-    my $avail_lights = `$calib_prog`; # -> "2 (NLIGHTS) | 3 2 4 (L1) | 1 2 3 (L2)"
-    my @light_split = split("|", $avail_lights);
+    my $avail_lights =  `$calib_prog`; #"2!1111 2222 3333!4444 5555 6666";
+    #$calib_prog`; # -> "2 (NLIGHTS)!3 2 4 (L1)!1 2 3 (L2)"
+    my @light_split = split("!", $avail_lights);
 
     # NROOMS is 2.
     # $rooms[0] has kinect. it has '2' lights, as told by $calib_prog. yes.
@@ -552,12 +553,11 @@ sub calibrate{
 
     # this is bad, yes.
     $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[1];
-    $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[2];
+    $decoded->{'rooms'}[0]->{'ports'}[1]->{'dev_coord'} = $light_split[2];
 
     open(my $fh, '>', '/tmp/sl-calibrated'); # just create the file.
     close $fh;
     $json = encode_json($decoded); # inserted dev_coord into json.
-    return $avail_lights;
 }
 
 sub pipe_from_gui{
@@ -581,12 +581,18 @@ sub pipe_from_gui{
 }
 
 sub main{
-#     unless(-e "/tmp/sl-calibrated"){ # create a file upon calibration.
-#         my $avail_lights = calibrate();
-#     }    
-# 
-#     my $gesture_prog = "./gesture.out";
+    unless(-e "/tmp/sl-calibrated"){ # create a file upon calibration.
+        calibrate();
+        print "CALIBRATED\n";
+        sleep(2);
+    }
 
+    if($ARGV[0] eq "--force-calibrate"){ # forced calibration
+        calibrate();
+        print "CALIBRATED\n";
+        sleep(2);
+    }
+#   my $gesture_prog = "./gesture.out";
 
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
 #     print "gui thread start\n";
