@@ -456,9 +456,13 @@ sub change_state {
 }
 
 sub calibrate{
-    my $calib_prog = "./kinect-calibrator.out";
-    my $avail_lights =  `$calib_prog`; #"2!1111 2222 3333!4444 5555 6666";
-#     my $avail_lights =  "2!1111 2222 3333!4444 5555 6666";
+    my $calib_prog = "./NiSimpleSkeleton.o config";
+    my $res = `$calib_prog`; #"2!1111 2222 3333!4444 5555 6666";
+    my @t_res = split("--", $res);
+#     print join(":::", @t_res);
+    my $avail_lights =  $t_res[1];
+#     print "av \n $avail_lights\n";
+    #my $avail_lights =  "2!1111 2222 3333!4444 5555 6666";
     #$calib_prog`; # -> "2 (NLIGHTS)!3 2 4 (L1)!1 2 3 (L2)"
     my @light_split = split("!", $avail_lights);
 
@@ -536,7 +540,12 @@ sub main{
     }
 
     my $dev_coords = fetch_dev_coords();
-#   my $gesture_prog = "./gesture.out $dev_coords";
+#     print "$dev_coords\n";
+   my $gesture_prog = `./NiSimpleSkeleton.o gesture $dev_coords`;
+#    print "GEST RETD :: $gesture_prog\n";
+   my @ret = split("--", $gesture_prog);
+   my $gest = $ret[1];
+#    print "recvd $gest\n";
 
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
 #     print "gui thread start\n";
