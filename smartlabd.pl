@@ -25,104 +25,21 @@ our $pid1, our $pid2;
 # 3 rooms. R0: 3 ports- 2 lights, 1 fan
 # R1: 2 ports- 1 light, 1 fan
 # R2: 1 port- 1 light. THAT's IT. DO NOT ALTER.
-our $json = '
-    {
-            "norooms": "3",
-            "rooms": [
-                {
-                    "room_id": "R0",
-                    "room_aliases": [
-                        "my room",
-                        "living room",
-                        "default",
-                        "here"
-                    ],
-                    "noports": "3",
-                    "ports": [
-                        {
-                            "port_id": "P0",
-                            "port_device": "L",
-                            "dev_coord" : "0",
-                            "port_aliases": [
-                                "light",
-                                " bulb"
-                            ]
-                        },
-                        {
-                            "port_id": "P1",
-                            "port_device": "L",
-                            "dev_coord" : "0",
-                            "port_aliases": [
-                                "light",
-                                " bulb"
-                            ]
-                        },
-                        {
-                            "port_aliases": [
-                                "fan",
-                                " cool"
-                            ],
-                            "port_device": "F",
-                            "port_id": "P1"
-                        }
-                    ]
-                },
-                {
-                    "room_id": "R1",
-                    "room_aliases": [
-                        "kitchen"
-                    ],
-                    "noports": "2",
-                    "ports": [
-                        {
-                            "port_id": "P0",
-                            "port_device": "L",
-                            "dev_coord" : 0,
-                            "port_aliases": [
-                                "light",
-                                " bulb"
-                            ]
-                        },
-                        {
-                            "port_aliases": [
-                                "fan",
-                                " cool"
-                            ],
-                            "port_device": "F",
-                            "port_id": "P1"
-                        }
-                    ]
-                },
-                {
-                    "room_id": "R2",
-                    "room_aliases": [
-                        "bath room"
-                    ],
-                    "noports": "1",
-                    "ports": [
-                        {
-                            "port_id": "P0",
-                            "port_device": "L",
-                            "dev_coord" : 0,
-                            "port_aliases": [
-                                "light",
-                                " bulb"
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }';
-        
-our $decoded = decode_json($json);
-our @rooms = @{ $decoded->{'rooms'} };
+our $json;
+our $decoded;
+our @rooms;
 our @rooms_aliases;
-foreach my $i ( 0 .. $#rooms ) {
-    $rooms_aliases[$i] = $rooms[$i]->{"room_aliases"};
-}
 our @ports_r;
-foreach my $i ( 0 .. $#rooms ) {
-    $ports_r[$i] = $rooms[$i]->{"ports"};
+
+sub objectify_json {
+    $decoded = decode_json($json);
+    @rooms = @{ $decoded->{'rooms'} };
+    foreach my $i ( 0 .. $#rooms ) {
+        $rooms_aliases[$i] = $rooms[$i]->{"room_aliases"};
+    }
+    foreach my $i ( 0 .. $#rooms ) {
+        $ports_r[$i] = $rooms[$i]->{"ports"};
+    }
 }
 
 sub tokenizeString { # breaks the given sentence into words
@@ -541,7 +458,7 @@ sub change_state {
 sub calibrate{
     my $calib_prog = "./kinect-calibrator.out";
     my $avail_lights =  `$calib_prog`; #"2!1111 2222 3333!4444 5555 6666";
-    #my $avail_lights =  "2!1111 2222 3333!4444 5555 6666";
+#     my $avail_lights =  "2!1111 2222 3333!4444 5555 6666";
     #$calib_prog`; # -> "2 (NLIGHTS)!3 2 4 (L1)!1 2 3 (L2)"
     my @light_split = split("!", $avail_lights);
 
@@ -559,6 +476,10 @@ sub calibrate{
     open(my $fh, '>', '/tmp/sl-calibrated'); # just create the file.
     close $fh;
     $json = encode_json($decoded); # inserted dev_coord into json.
+    my $json_file = "./house_model.json";
+    open($fh, ">", $json_file) or die $!;
+    print $fh $json;
+    close $fh;
 }
 
 sub pipe_from_gui{
@@ -590,6 +511,18 @@ sub fetch_dev_coords{
 }
 
 sub main{
+    my $json_file = "./house_model.json";
+    if(-e $json_file) {
+        local $/;
+        open my $fh, "<", $json_file or die $!;
+        $json = <$fh>;
+        close $fh;
+    }
+    else {
+        print "JSON model of the house not found. Exiting...\n";
+        exit 1;
+    }
+    objectify_json();
     unless(-e "/tmp/sl-calibrated"){ # create a file upon calibration.
         calibrate();
         print "CALIBRATED\n";
