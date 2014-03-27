@@ -1,0 +1,70 @@
+<html>
+<head>
+
+
+
+
+<script>
+function ajaxRequest(){
+ var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"] //activeX versions to check for in IE
+ if (window.ActiveXObject){ //Test for support for ActiveXObject in IE first (as XMLHttpRequest in IE7 is broken)
+  for (var i=0; i<activexmodes.length; i++){
+   try{
+    return new ActiveXObject(activexmodes[i])
+   }
+   catch(e){
+    //suppress error
+   }
+  }
+ }
+ else if (window.XMLHttpRequest) // if Mozilla, Safari etc
+  return new XMLHttpRequest()
+ else
+  return false
+} 
+
+
+function changeState(itemid,roomid)
+{
+var itemstate = document.getElementById(itemid).value;
+var tostate;
+if(itemstate == 'on')
+	tostate = 'off';
+
+else
+	tostate = 'on';
+var ajaxReq = new ajaxRequest();
+ajaxReq.onreadystatechange = function(){
+			if(ajaxReq.readyState == 4 && ajaxReq.status == 200)
+			{
+				var e = document.getElementById(itemid);
+				e.value = ajaxReq.responseText;
+				alert("over");
+
+
+
+			}		
+					}
+
+
+
+var parameters = '?'+ 'id=' + itemid + '&tostate=' + tostate + '&roomid=' + roomid;
+ajaxReq.open("GET", "../changeState"+parameters ,true);
+ajaxReq.send();
+
+}
+
+
+</script>
+</head>
+<body>
+{% for item in roomDetails %}
+<p> {% rooms[forloop.counter0].roomid %} </p>
+<p> {% rooms[forloop.counter0].des %} </p>
+<li><input type="button" onclick = "ChangeStatePort('{{item.id}}','{{item.roomid}}');" value = "{{item.state}}" id= "{{item.id}}"/> </li>
+{% endfor %}
+
+
+
+</body>
+</html>

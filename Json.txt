@@ -1,0 +1,58 @@
+{
+            "norooms": "2",
+            "rooms": [
+                {
+                    "room_id": "R0",
+                    "room_aliases": [
+                        "my room",
+                        "living room",
+                        "default",
+                        "here"
+                    ],
+                    "noports": "2",
+                    "ports": [
+                        {
+                            "port_id": "0P0",
+                            "port_device": "L",
+                            "port_aliases": [
+                                "light",
+                                " bulb"
+                            ]
+                        },
+                        {
+                            "port_aliases": [
+                                "fan",
+                                " cool"
+                            ],
+                            "port_device": "F",
+                            "port_id": "0P1"
+                        }
+                    ]
+                },
+                {
+                    "room_id": "R1",
+                    "room_aliases": [
+                        "kitchen"
+                    ],
+                    "noports": "2",
+                    "ports": [
+                        {
+                            "port_id": "1P0",
+                            "port_device": "L",
+                            "port_aliases": [
+                                "light",
+                                " bulb"
+                            ]
+                        },
+                        {
+                            "port_aliases": [
+                                "fan",
+                                " cool"
+                            ],
+                            "port_device": "F",
+                            "port_id": "1P1"
+                        }
+                    ]
+                }
+            ]
+        }

@@ -1,0 +1,248 @@
+<html>
+    <head>
+        <title>Login Page</title>
+        <style type="text/css">
+            table.center    {   border-style:none;
+                                height:100%;
+                                width:100%;
+                            }
+
+            table.pu        {   padding:0;
+                            }
+
+            table.login     {   border-color:#000080;
+                                border-style:solid;
+                                border-width:1px;
+                                padding:0;
+                            }
+
+            td.center       {   height:100%;
+                                text-align:center;
+                                vertical-align:middle;
+                                width:100%;
+                            }
+
+            td.pu           {   padding-bottom:3px;
+                            }
+
+            td.left         {   background-color:#ffffff;
+                                color:#000080;
+                                font-family:Verdana,sans-serif;
+                                font-size:12px;
+                                font-weight:normal;
+                                padding:0 0 0 4px;
+                                text-align:left;
+                                vertical-align:middle;
+                            }
+
+            td.right        {   background-color:#ffffff;
+                                color:#000080;
+                                font-family:Verdana,sans-serif;
+                                font-size:12px;
+                                font-weight:normal;
+                                padding:0 4px 0 0;
+                                text-align:right;
+                                vertical-align:middle;
+                            }
+
+            a.link          {   color:#000080;
+                                font-family:Verdana,sans-serif;
+                                font-size:12px;
+                                font-weight:normal;
+                                text-decoration:none;
+                            }
+
+            a.link:hover    {   text-decoration:underline;
+                            }
+
+            td.header       {   background-color:#000080;
+                                color:#ffffff;
+                                font-family:Verdana,sans-serif;
+                                font-size:18px;
+                                font-weight:normal;
+                                padding:6px;
+                                vertical-align:middle;
+                            }
+
+            td.spacer       {   font-size:1px;
+                                height:3px;
+                            }
+
+            td.login        {   background-color:#ffffff;
+                                color:#000000;
+                                font-family:Verdana,sans-serif;
+                                font-size:13px;
+                                font-weight:normal;
+                                padding:3px 6px 3px 6px;
+                                vertical-align:middle;
+                            }
+
+            td.error        {   background-color:#ffffff;
+                                color:#ff0000;
+                                font-family:Verdana,sans-serif;
+                                font-size:12px;
+                                font-weight:normal;
+                                padding:3px 6px 3px 6px;
+                                vertical-align:middle;
+                            }
+
+            td.input        {   padding:3px 6px 3px 6px;
+                            }
+
+            input.text      {   font-family:Verdana,sans-serif;
+                                font-size:13px;
+                                font-weight:normal;
+                                padding-left:3px;
+                            }
+
+            td.button       {   padding:6px 0 3px 0;
+                                text-align:center;
+                                vertical-align:middle;
+                            }
+
+            td.logo         {   padding:3px 0 0 6px;
+                            }
+
+            input.image     {   cursor:pointer;
+                            }
+        </style>
+        <script type="text/javascript">
+            var operr   = null;
+            
+
+            var redirecturl = null;
+            
+
+            //initialisation
+            function doInit() {
+                if(redirecturl != null) {
+                    window.location = redirecturl;
+                    doBusy();
+                    return;
+                }
+
+                var form        = document.login;
+                var user        = form.username;
+                username.focus();
+
+                if(operr != null) alert(operr);
+            }
+            //button (de)activation
+            function doActivate(btn) {
+                if(btn.src != "undefined")  btn.src = "../../images/login_on.jpg";
+            }
+            function doDeactivate(btn) {
+                if(btn.src != "undefined")  btn.src = "../../images/login_off.jpg";
+            }
+            //submission (validation)
+            function doLogin() {
+                if(!SUBMIT) return false;
+
+                var form        = document.login;
+                var user        = form.username.value;
+                var password    = form.password.value;
+
+                if(username.length == 0) {
+                    form.user.focus();
+                    return false;
+                }
+                if(password.length == 0) {
+                    form.password.focus();
+                    return false;
+                }
+                return true;
+            }
+            var SUBMIT  = false;
+            function doSubmit() {
+                SUBMIT          = true;
+                var form        = document.login;
+                if(doLogin()) {
+                    SUBMIT      = false;
+                    form.submit();
+                } else {
+                    alert(" Incomplete user input.\n\nPlease enter user name and password.");
+                }
+            }
+            //registration
+            function doRegister() {
+                window.location = "/register";
+                return false;
+            }
+            //password reset
+            function doReset() {
+                window.location = "/resetpassword;
+                return false;
+            }
+            function doBusy() {
+                if(typeof(document.all) != "undefined") {
+                    var el  = document.all;
+                    var nEl = el.length;
+                    for(var i=0;i < nEl;i++) {
+                        el(i).style.cursor      = 'wait';
+                	}
+                }
+                document.body.style.cursor      = 'wait';
+
+                window.status = "Executing operation...";
+            }
+        </script>
+    </head>
+    <body onLoad="doInit();">
+    
+        <table class="center">
+            <tr>
+                <td class="center" align="center" valign="middle">
+                    <form name="Login" action="" method="post"  accept-charset="UTF-8">
+ 			{% csrf_token %}                   
+<table class="pu" cellspacing="0" align="center">
+                    <tr>
+                    <td class="pu" colspan="2">
+                    <table class="login" cellspacing="0" align="center">
+                        <tr>
+                            <td class="header" colspan="3">
+                                Login Form
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="spacer" colspan="3">
+                                &nbsp;
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                              
+                            <td class="login">
+                                User Name:
+                            </td>
+                            <td class="input">
+                                <input class="text" type="text" name="username" size="25" value=""/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="login">
+                                Password:
+                            </td>
+                            <td class="input">
+                                <input class="text" type="password" name="password" size="25"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="padding:0 6px 2px 6px"><hr noshade size="1" color="#bbbbdd"></td>
+                        </tr>
+                        <tr>
+                            <td class="button" colspan="3">
+<input type="submit" value="Login" /> 
+                            </td>
+                        </tr>
+                    </table>
+                    </td>
+                    </tr>
+     
+                    </table>
+                    </form>
+                </td>
+            </tr>
+        </table>
+        
+    </body>
+</html>

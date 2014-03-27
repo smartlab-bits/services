@@ -1,0 +1,56 @@
+<html>
+<head>
+</head>
+<body>
+<script>
+function changeState(itemid,roomid)
+{
+
+var itemstate = document.getElementById(itemid).value; 
+var tostate;
+var parameters;
+var ajaxReq = new XMLHttpRequest();
+if(itemstate == 'True')
+	{
+tostate = 'False';
+}
+else
+	{
+tostate = 'True';
+}
+
+ajaxReq.onreadystatechange = function(){
+			if(ajaxReq.readyState == 4 && ajaxReq.status == 200)
+			{
+				var e = document.getElementById(itemid);
+				e.value = ajaxReq.responseText;
+				alert("State Changed");
+
+
+
+			}		
+					}
+
+
+
+parameters = '?'+ 'id=' + itemid + '&tostate=' + tostate + '&roomid=' + roomid;
+ajaxReq.open("GET", "../../../changeState" + parameters ,true);
+ajaxReq.send();
+
+}
+</script>
+
+{% for value in Rooms %}
+	{% for room in RoomDetails %}
+		{% if forloop.counter0 == forloop.parentloop.counter0 %}
+			<p>{{room.des}}</p>
+		{% endif  %}
+	{% endfor %}
+	{%for item in value %}
+    
+<li>Component: {{item.deviceId}} <input type="button" onclick = "changeState('{{item.id}}','{{item.roomid}}');" value = "{{item.state}}" id= "{{item.id}}"/> </li>
+	{% endfor %}
+{% endfor %}
+
+</body>
+</html>
