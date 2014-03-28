@@ -2,9 +2,7 @@
 use strict;
 use warnings;
 use threads;
-use IPC::System::Simple qw(capture);
 use JSON;
-use POSIX 'mkfifo';
 
 our @words1 = (), our @words2 = ();
 our @lightwords = ("light", "tubelight", "see", "bulb", "dark", "darker", "bright", "brighter", "darken", "brighten", "brightness", "darkness", "dim", "lit");
@@ -328,7 +326,7 @@ sub findFanWords() { # finds if the sentence contains fan-related words and chan
                 if ($s eq $fan) {
                     $fanSent = 1;
                     $flag = 1;
-                    
+
                     foreach my $i (0 .. $#{$ports_r[$rno1]}) {
             if($ports_r[$rno1][$i]->{"port_device"} eq "F") {
             $pid1 = $ports_r[$rno1][$i]->{"port_id"};
@@ -389,6 +387,62 @@ my $TOLERANCE=5;
 my $SILENCE_TIME=2.0;
 sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog. then say "switch on/off that light". then get light code from dev_coord.
     while(1) {
+        if ($FLAG == 2) {
+            my $dev_coords = fetch_dev_coords();
+            my $gesture_prog;
+            my $action="";
+            eval {
+                local $SIG{ALRM} = sub {die "alarm\n"};
+                alarm 30;
+                $gesture_prog = `./GestureRecog.o gesture $dev_coords`;
+                alarm 0;
+            };
+
+            if ($@) {
+                die unless $@ eq "alarm\n";
+                print "timed out\n";
+            }
+            else {
+                print "didn't time out\n";
+            }
+
+            print "script continues...\n";
+#             my $gesture_prog = `./GestureRecog.o gesture $dev_coords`;
+            my @ret = split("--", $gesture_prog);
+            my $gest = $ret[1];
+            if($gest == 0) {
+                $action = $action."R0P0";
+            } else {
+                $action = $action."R0P1";
+            }
+            my $p_in = "./states.txt";            
+            my $curr;
+            # print "opening\n";
+            open( my $p, "<", $p_in ) or die $!;  
+            # print "opened\n";
+            while(<$p>) {
+#           print "calling change state\n";
+                if($gest == 0) {
+                    if(substr($_, 5, 1) eq "T") {
+                        $action = $action." F\n";
+                    } else {
+                        $action = $action." T\n";
+                    }
+                }
+                else {
+                    if(substr($_, 11, 1) eq "T") {
+                        $action = $action." F\n";
+                    } else {
+                        $action = $action." T\n";
+                    }
+                }
+                
+            }
+            close($p);
+            change_state($action);
+        $FLAG = 0;
+    }
+            
         if ($FLAG == 1)
         {
             print "Listening...."."\n";
@@ -416,10 +470,23 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
         {
             $FLAG=1;
         }
+        elsif($UTTERANCE eq "camera")
+        {
+            $FLAG=2;
+        }
         elsif($UTTERANCE eq "stop" || $COUNT == 3) # max 3 meaningless sentences in succession
         {
             $FLAG=0;
+            $COUNT = 0;
             print "Speak google to activate\n";            
+        }
+        elsif($UTTERANCE eq "die"){
+            print "Bye\n";
+            my $p_in = "./from_gui.txt";
+            open(my $p, ">", $p_in ) or die $!;
+            print $p "";
+            close($p);
+            die;
         }
         elsif($UTTERANCE eq "Could not recognize.")
         {
@@ -436,7 +503,17 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
         else
         {
             $COUNT=0;
-            change_state($ACTION);
+            my $str = $ACTION;
+            my $ifon = "on";
+            my $ifoff = "off";
+
+            $ifon = quotemeta $ifon; # escape regex metachars if present
+            $ifoff = quotemeta $ifoff; # escape regex metachars if present
+
+            $str =~ s/$ifon/T/g;    # replace on, off with T, F
+            $str =~ s/$ifoff/F/g;
+
+            change_state($str);
 #             print "state changed\n";
         }
         # system("echo $ACTION > /dev/ttys2");
@@ -447,7 +524,7 @@ sub start_listening{ # TODO add gesure mode: say "gesture" to start kinect prog.
 sub change_state {
     my $IN = $_[0];
     print $IN;
-    my $file = "/tmp/from_perl.txt";
+    my $file = "./from_perl.txt";
     open( my $fh, '>', $file );
     chomp $IN;
     print $fh $IN;
@@ -456,38 +533,39 @@ sub change_state {
 }
 
 sub calibrate{
-    my $calib_prog = "./NiSimpleSkeleton.o config";
+    my $calib_prog = "./GestureRecog.o config";
     my $res = `$calib_prog`; #"2!1111 2222 3333!4444 5555 6666";
     my @t_res = split("--", $res);
-#     print join(":::", @t_res);
     my $avail_lights =  $t_res[1];
-#     print "av \n $avail_lights\n";
     #my $avail_lights =  "2!1111 2222 3333!4444 5555 6666";
     #$calib_prog`; # -> "2 (NLIGHTS)!3 2 4 (L1)!1 2 3 (L2)"
-    my @light_split = split("!", $avail_lights);
+    
+    if($avail_lights){
+        my @light_split = split("!", $avail_lights);
 
     # NROOMS is 2.
     # $rooms[0] has kinect. it has '2' lights, as told by $calib_prog. yes.
 
     # TODO generalize for all ports if type 'L' in R0 and then construct JSON
 
-    my $NLIGHTS = $light_split[0];
+        my $NLIGHTS = $light_split[0];
 
     # this is bad, yes.
-    $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[1];
-    $decoded->{'rooms'}[0]->{'ports'}[1]->{'dev_coord'} = $light_split[2];
+        $decoded->{'rooms'}[0]->{'ports'}[0]->{'dev_coord'} = $light_split[1];
+        $decoded->{'rooms'}[0]->{'ports'}[1]->{'dev_coord'} = $light_split[2];
 
-    open(my $fh, '>', '/tmp/sl-calibrated'); # just create the file.
-    close $fh;
-    $json = encode_json($decoded); # inserted dev_coord into json.
-    my $json_file = "./house_model.json";
-    open($fh, ">", $json_file) or die $!;
-    print $fh $json;
-    close $fh;
+        open(my $fh, '>', '/tmp/sl-calibrated'); # just create the file.
+        close $fh;
+        $json = encode_json($decoded); # inserted dev_coord into json.
+        my $json_file = "./house_model.json";
+        open($fh, ">", $json_file) or die $!;
+        print $fh $json;
+        close $fh;
+    }
 }
 
 sub pipe_from_gui{
-    my $p_in = "/tmp/from_gui.txt";
+    my $p_in = "./from_gui.txt";
     my $prev = "";
     while(1){
         if (-e $p_in) {
@@ -514,6 +592,10 @@ sub fetch_dev_coords{
     return $dev_coords;
 }
 
+sub launch_comm{
+    my $comm_proc = `python ./per2gui.py`;
+}
+
 sub main{
     my $json_file = "./house_model.json";
     if(-e $json_file) {
@@ -533,23 +615,16 @@ sub main{
         sleep(2);
     }
 
-    if($ARGV[0] eq "--force-calibrate"){ # forced calibration
+    if($ARGV[0] && $ARGV[0] eq "--force-calibrate"){ # forced calibration
         calibrate();
         print "CALIBRATED\n";
         sleep(2);
     }
 
-    my $dev_coords = fetch_dev_coords();
-#     print "$dev_coords\n";
-   my $gesture_prog = `./NiSimpleSkeleton.o gesture $dev_coords`;
-#    print "GEST RETD :: $gesture_prog\n";
-   my @ret = split("--", $gesture_prog);
-   my $gest = $ret[1];
-#    print "recvd $gest\n";
-
     my $gui_pipe_thread = threads->create(\&pipe_from_gui);
 #     print "gui thread start\n";
     my $speech_thread = threads->create(\&start_listening);
+    my $comm_proc_thread = threads->create(\&launch_comm);
 #     print "speech thread start\n";
     my $gui_thread_ret = $gui_pipe_thread->join();
     my $speech_thread_ret = $speech_thread->join();
